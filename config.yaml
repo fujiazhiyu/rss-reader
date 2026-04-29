@@ -277,13 +277,16 @@ feeds:
 
 # LLM 配置
 llm:
-  provider: "claude"  # claude / openai / ollama
+  provider: "openai"  # claude / openai / ollama / deepseek
   model: "claude-3-7-sonnet-20250219"  # 3.7 Sonnet - 性能强，性价比好
   api_key: "${ANTHROPIC_API_KEY}"  # 从环境变量读取
 
   # OpenAI 配置（当 provider 为 openai 时使用）
   openai_api_key: "${OPENAI_API_KEY}"
   openai_model: "gpt-4o-mini"
+
+  deepseek_model: "deepseek-chat"      # DeepSeek 模型
+  deepseek_api_key: "${DEEPSEEK_API_KEY}" # DeepSeek API Key
 
   # 摘要 prompt (Smart Brevity 风格)
   summary_prompt: |

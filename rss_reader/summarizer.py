@@ -13,6 +13,9 @@ class Summarizer:
         self.api_key = config.get('api_key')
         self.openai_api_key = config.get('openai_api_key')
         self.openai_model = config.get('openai_model', 'gpt-4o-mini')
+        # --- 新增 DeepSeek 配置 ---
+        self.deepseek_api_key = config.get('deepseek_api_key') 
+        self.deepseek_model = config.get('deepseek_model', 'deepseek-chat') # DeepSeek 默认模型
         self.prompt_template = config.get('summary_prompt', self._default_prompt())
 
         self._client = None
@@ -38,6 +41,17 @@ class Summarizer:
             self._client = openai.OpenAI(api_key=self.openai_api_key)
         return self._client
 
+    # --- 新增：获取 DeepSeek 客户端 ---
+    def _get_deepseek_client(self):
+        """获取 DeepSeek 客户端"""
+        if self._client is None:
+            import openai # DeepSeek 兼容 OpenAI 格式
+            self._client = openai.OpenAI(
+                api_key=self.deepseek_api_key,
+                base_url="https://api.deepseek.com" # DeepSeek 的基础 URL
+            )
+        return self._client
+
     def _summarize_with_claude(self, prompt: str) -> str:
         """使用 Claude 生成摘要"""
         client = self._get_claude_client()
@@ -58,6 +72,22 @@ class Summarizer:
 
         response = client.chat.completions.create(
             model=self.openai_model,
+            max_tokens=500,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        return response.choices[0].message.content
+
+    # --- 新增：使用 DeepSeek 生成摘要 ---
+    def _summarize_with_deepseek(self, prompt: str) -> str:
+        """使用 DeepSeek 生成摘要"""
+        client = self._get_deepseek_client()
+        
+        # DeepSeek 与 OpenAI 调用方式相同
+        response = client.chat.completions.create(
+            model=self.deepseek_model,
             max_tokens=500,
             messages=[
                 {"role": "user", "content": prompt}
@@ -91,6 +121,9 @@ class Summarizer:
                 return self._summarize_with_claude(prompt)
             elif self.provider == 'openai':
                 return self._summarize_with_openai(prompt)
+            # --- 新增：DeepSeek 分支 ---
+            elif self.provider == 'deepseek':
+                return self._summarize_with_deepseek(prompt)
             else:
                 print(f"[警告] 未知的 LLM provider: {self.provider}")
                 return None
